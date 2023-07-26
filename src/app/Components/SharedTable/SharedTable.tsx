@@ -8,12 +8,16 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import { Paper, Box } from "@mui/material";
-import { getCallData } from "../../apis/actions/CallAction";
+import { fetchCalls } from "@/app/apis/slice/callSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/app/apis/store";
 
 export default function SharedTable() {
-  const [data, setData] = useState<any>([]);
+  const { entities } = useSelector((state: RootState) => state.call);
+  let data = entities.nodes;
+  const { accessToken } = useSelector((state: RootState) => state.accessToken);
 
+  const dispatch = useDispatch<AppDispatch>();
   const columns = [
     { id: "call_type", label: "CALL TYPE", minWidth: 60, align: "left" },
     { id: "direction", label: "DIRECTION", minWidth: 60, align: "left" },
@@ -25,27 +29,12 @@ export default function SharedTable() {
     { id: "", label: "STATUS", minWidth: 60, align: "left" },
     { id: "action", label: "ACTION", minWidth: 60, align: "left" },
   ];
-  const getCallData = () => {
-    const config = {
-      method: "get",
-      url: "https://frontend-test-api.aircall.io/calls?offset=1&limit=10",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    };
-    axios(config)
-      .then(function (response) {
-        console.log(response.data.nodes, "plrsr");
-        setData(response.data.nodes);
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-  };
 
   React.useEffect(() => {
-    getCallData();
-  }, []);
+    if (accessToken) {
+      dispatch(fetchCalls({ accessToken: `Bearer ${accessToken}` }));
+    }
+  }, [accessToken]);
   return (
     <Box
       bgcolor={"white"}
