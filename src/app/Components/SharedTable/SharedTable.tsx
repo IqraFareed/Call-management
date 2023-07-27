@@ -7,11 +7,11 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import { Paper, Box } from "@mui/material";
+import { Paper, Box, Typography, Button } from "@mui/material";
 import { fetchCalls } from "@/app/apis/slice/callSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/app/apis/store";
-
+import moment from "moment";
 export default function SharedTable() {
   const { entities } = useSelector((state: RootState) => state.call);
   let data = entities.nodes;
@@ -26,7 +26,7 @@ export default function SharedTable() {
     { id: "to", label: "TO", minWidth: 60, align: "left" },
     { id: "via", label: "VIA", minWidth: 60, align: "left" },
     { id: "created_at", label: "CREATED AT", minWidth: 60, align: "left" },
-    { id: "", label: "STATUS", minWidth: 60, align: "left" },
+    { id: "is_archived", label: "STATUS", minWidth: 60, align: "left" },
     { id: "action", label: "ACTION", minWidth: 60, align: "left" },
   ];
 
@@ -35,10 +35,15 @@ export default function SharedTable() {
       dispatch(fetchCalls({ accessToken: `Bearer ${accessToken}` }));
     }
   }, [accessToken]);
+  function formatSecondsToMinutesAndSeconds(seconds: "string") {
+    const duration = moment.duration(seconds, "seconds");
+    const minutes = duration.minutes();
+    const remainingSeconds = duration.seconds();
+    return `${minutes} minutes and ${remainingSeconds} seconds`;
+  }
   return (
     <Box
       bgcolor={"white"}
-      height={"100vh"}
       display={"flex"}
       paddingX={"3rem"}
       justifyContent={"center"}
@@ -66,7 +71,25 @@ export default function SharedTable() {
                   const value = row[column.id];
                   return (
                     <TableCell key={index} align="left">
-                      {value}
+                      {column.id === "call_type" ? (
+                        <Typography>{value}</Typography>
+                      ) : column.id === "duration" ? (
+                        <Typography>
+                          {formatSecondsToMinutesAndSeconds(value)}
+                        </Typography>
+                      ) : column.id === "created_at" ? (
+                        <Typography>
+                          {moment(value).format("DD-MM-YYYY")}
+                        </Typography>
+                      ) : column.id === "is_archived" ? (
+                        <Typography>
+                          {value ? "Archived" : "Unarchive"}
+                        </Typography>
+                      ) : column.id === "action" ? (
+                        <Button variant="contained">Add Note</Button>
+                      ) : (
+                        <Typography>{value}</Typography>
+                      )}
                     </TableCell>
                   );
                 })}
