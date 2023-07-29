@@ -15,13 +15,6 @@ import moment from "moment";
 import SharedPagination from "../SharedPagination/SharedPagination";
 import SharedModal from "../SharedModal/SharedModal";
 export default function SharedTable() {
-  const { entities } = useSelector((state: RootState) => state.call);
-  let data = entities.nodes;
-  const { accessToken } = useSelector((state: RootState) => state.accessToken);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [open, setOpen] = React.useState(false);
-  const [modalData, setModalData] = React.useState(null);
-  const dispatch = useDispatch<AppDispatch>();
   const columns = [
     { id: "call_type", label: "CALL TYPE", minWidth: 60, align: "left" },
     { id: "direction", label: "DIRECTION", minWidth: 60, align: "left" },
@@ -33,12 +26,34 @@ export default function SharedTable() {
     { id: "is_archived", label: "STATUS", minWidth: 60, align: "left" },
     { id: "action", label: "ACTION", minWidth: 60, align: "left" },
   ];
+  const dispatch = useDispatch<AppDispatch>();
+  const { entities } = useSelector((state: RootState) => state.call);
+  let data = entities.nodes;
+
+  const { accessToken } = useSelector((state: RootState) => state.accessToken);
+  const [open, setOpen] = React.useState(false);
+  const [modalData, setModalData] = React.useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const NumberOfRecordsPerPage = 8;
+  const lastIndex = currentPage * NumberOfRecordsPerPage;
+  const firstIndex = lastIndex - NumberOfRecordsPerPage;
+  const offset = (currentPage - 1) * NumberOfRecordsPerPage;
+  const totalPages = Math.ceil(entities.totalCount / NumberOfRecordsPerPage);
+  const numbers: number[] = totalPages
+    ? [...Array(totalPages + 1).keys()].slice(1)
+    : [];
 
   React.useEffect(() => {
     if (accessToken) {
-      dispatch(fetchCalls({ accessToken: `Bearer ${accessToken}` }));
+      dispatch(
+        fetchCalls({
+          accessToken: `Bearer ${accessToken}`,
+          limit: NumberOfRecordsPerPage,
+          offset: offset,
+        })
+      );
     }
-  }, [accessToken]);
+  }, [accessToken, offset]);
   function formatSecondsToMinutesAndSeconds(seconds: "string") {
     const duration = moment.duration(seconds, "seconds");
     const minutes = duration.minutes();
@@ -128,15 +143,18 @@ export default function SharedTable() {
         justifyContent={"center"}
         alignItems={"center"}
       >
-        {/* <SharedPagination
+        <SharedPagination
           totalRecords={entities.totalCount}
-          NumberOfRecordsPerPage={10}
-          totalPages={entities.totalCount / 10}
+          NumberOfRecordsPerPage={NumberOfRecordsPerPage}
+          totalPages={totalPages}
           setRecord={(e: any) => setCurrentPage(e)}
           record={currentPage}
           setCurrentPage={(e: any) => setCurrentPage(e)}
           currentPage={currentPage}
-        /> */}
+          numbers={numbers}
+          firstIndex={firstIndex}
+          lastIndex={lastIndex}
+        />
       </Box>
     </Box>
   );

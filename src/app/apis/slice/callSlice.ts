@@ -2,11 +2,13 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 interface FetchDataArgs {
   accessToken: string;
+  limit: number;
+  offset: number;
 }
 export const fetchCalls = createAsyncThunk(
   "calls/getAllCalls",
   async (arg: FetchDataArgs, thunkApi) => {
-    const url = "https://frontend-test-api.aircall.io/calls?offset=1&limit=10";
+    const url = `https://frontend-test-api.aircall.io/calls?offset=${arg.offset}&limit=${arg.limit}`;
     const headers = new Headers();
     headers.append("Authorization", ` ${arg.accessToken}`);
 

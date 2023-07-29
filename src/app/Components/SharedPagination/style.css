@@ -1,0 +1,16 @@
+.active {
+  background: blue;
+  border-radius: 4px;
+}
+.activeText {
+  color: white;
+}
+
+.inactiveText {
+  color: black;
+  text-decoration: none;
+}
+
+.arrows {
+  color: black;
+}

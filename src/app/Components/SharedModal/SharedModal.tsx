@@ -25,7 +25,7 @@ interface IProps {
 
 export default function sharedModal(props: IProps) {
   const { open, data, handleClose } = props;
-  console.log(data, "ff");
+
   return (
     <div>
       <Modal
