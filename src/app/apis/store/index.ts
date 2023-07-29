@@ -1,15 +1,13 @@
 // src/redux/store.ts
+import { configureStore } from "@reduxjs/toolkit";
+import callsReducer from "../slice/callSlice";
+import tokenReducer from "../slice/generateToken";
+export function makeStore() {
+  return configureStore({
+    reducer: { call: callsReducer, accessToken: tokenReducer },
+  });
+}
 
-import { createStore, applyMiddleware, Store } from "redux";
-import thunkMiddleware from "redux-thunk";
-import rootReducers from "../reducers/rootReducers";
-
-export const configureStore = (initialState: any): Store => {
-  const store = createStore(
-    rootReducers,
-    initialState,
-    applyMiddleware(thunkMiddleware)
-  );
-
-  return store;
-};
+export const store = makeStore();
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

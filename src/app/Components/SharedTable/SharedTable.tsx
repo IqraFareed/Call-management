@@ -7,13 +7,21 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-import { Paper, Box } from "@mui/material";
-import { getCallData } from "../../apis/actions/CallAction";
+import { Paper, Box, Typography, Button } from "@mui/material";
+import { fetchCalls } from "@/app/apis/slice/callSlice";
 import { useDispatch, useSelector } from "react-redux";
-
+import { AppDispatch, RootState } from "@/app/apis/store";
+import moment from "moment";
+import SharedPagination from "../SharedPagination/SharedPagination";
+import SharedModal from "../SharedModal/SharedModal";
 export default function SharedTable() {
-  const [data, setData] = useState<any>([]);
-
+  const { entities } = useSelector((state: RootState) => state.call);
+  let data = entities.nodes;
+  const { accessToken } = useSelector((state: RootState) => state.accessToken);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [open, setOpen] = React.useState(false);
+  const [modalData, setModalData] = React.useState(null);
+  const dispatch = useDispatch<AppDispatch>();
   const columns = [
     { id: "call_type", label: "CALL TYPE", minWidth: 60, align: "left" },
     { id: "direction", label: "DIRECTION", minWidth: 60, align: "left" },
@@ -22,70 +30,114 @@ export default function SharedTable() {
     { id: "to", label: "TO", minWidth: 60, align: "left" },
     { id: "via", label: "VIA", minWidth: 60, align: "left" },
     { id: "created_at", label: "CREATED AT", minWidth: 60, align: "left" },
-    { id: "", label: "STATUS", minWidth: 60, align: "left" },
+    { id: "is_archived", label: "STATUS", minWidth: 60, align: "left" },
     { id: "action", label: "ACTION", minWidth: 60, align: "left" },
   ];
-  const getCallData = () => {
-    const config = {
-      method: "get",
-      url: "https://frontend-test-api.aircall.io/calls?offset=1&limit=10",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    };
-    axios(config)
-      .then(function (response) {
-        console.log(response.data.nodes, "plrsr");
-        setData(response.data.nodes);
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-  };
 
   React.useEffect(() => {
-    getCallData();
-  }, []);
+    if (accessToken) {
+      dispatch(fetchCalls({ accessToken: `Bearer ${accessToken}` }));
+    }
+  }, [accessToken]);
+  function formatSecondsToMinutesAndSeconds(seconds: "string") {
+    const duration = moment.duration(seconds, "seconds");
+    const minutes = duration.minutes();
+    const remainingSeconds = duration.seconds();
+    return `${minutes} minutes and ${remainingSeconds} seconds`;
+  }
+
+  const handleOpen = (row: any) => {
+    setOpen(true);
+    setModalData(row);
+  };
+  const handleClose = () => setOpen(false);
   return (
-    <Box
-      bgcolor={"white"}
-      height={"100vh"}
-      display={"flex"}
-      paddingX={"3rem"}
-      justifyContent={"center"}
-      alignItems={"center"}
-    >
-      <TableContainer component={Paper}>
-        <Table aria-label="caption table">
-          <TableHead>
-            <TableRow>
-              {columns?.map((column, index) => (
-                <TableCell
-                  align={column.align}
-                  key={index}
-                  style={{ minWidth: column.minWidth }}
-                >
-                  {column.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data?.map((row: any) => (
-              <TableRow key={row.name}>
-                {columns.map((column: any, index) => {
-                  const value = row[column.id];
-                  return (
-                    <TableCell key={index} align="left">
-                      {value}
-                    </TableCell>
-                  );
-                })}
+    <Box bgcolor={"white"} paddingX={"3rem"}>
+      <Box paddingY={"1rem"}>Filter by: Status</Box>
+      <Box display={"flex"} justifyContent={"center"} alignItems={"center"}>
+        <TableContainer component={Paper}>
+          <Table aria-label="caption table">
+            <TableHead>
+              <TableRow>
+                {columns?.map((column, index) => (
+                  <TableCell
+                    align={column.align}
+                    key={index}
+                    style={{ minWidth: column.minWidth }}
+                  >
+                    {column.label}
+                  </TableCell>
+                ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {data?.map((row: any) => (
+                <TableRow key={row.name}>
+                  {columns.map((column: any, index) => {
+                    const value = row[column.id];
+                    return (
+                      <TableCell key={index} align="left">
+                        {column.id === "call_type" ? (
+                          <Typography>{value}</Typography>
+                        ) : column.id === "duration" ? (
+                          <Typography>
+                            {formatSecondsToMinutesAndSeconds(value)}
+                          </Typography>
+                        ) : column.id === "created_at" ? (
+                          <Typography>
+                            {moment(value).format("DD-MM-YYYY")}
+                          </Typography>
+                        ) : column.id === "is_archived" ? (
+                          <Typography>
+                            {value ? "Archived" : "Unarchive"}
+                          </Typography>
+                        ) : column.id === "action" ? (
+                          <Box>
+                            <Button
+                              variant="contained"
+                              onClick={() => handleOpen(row)}
+                            >
+                              Add Note
+                            </Button>
+                          </Box>
+                        ) : (
+                          <Typography>{value}</Typography>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+              {open && (
+                <Box>
+                  <SharedModal
+                    open={open}
+                    handleClose={handleClose}
+                    data={modalData}
+                  />
+                </Box>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+
+      <Box
+        marginY={5}
+        display={"flex"}
+        justifyContent={"center"}
+        alignItems={"center"}
+      >
+        {/* <SharedPagination
+          totalRecords={entities.totalCount}
+          NumberOfRecordsPerPage={10}
+          totalPages={entities.totalCount / 10}
+          setRecord={(e: any) => setCurrentPage(e)}
+          record={currentPage}
+          setCurrentPage={(e: any) => setCurrentPage(e)}
+          currentPage={currentPage}
+        /> */}
+      </Box>
     </Box>
   );
 }
